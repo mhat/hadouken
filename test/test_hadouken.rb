@@ -23,10 +23,10 @@ class TestHadouken < Test::Unit::TestCase
       plan.add_group Hadouken::Group.new(:name => :cat, :range => (1..3), :pattern => "cat-%05d")
       plan.add_group Hadouken::Group.new(:name => :dog, :range => (1..5), :pattern => "dog-%05d")
     
-      assert_equal 8, h.groups.hosts.size
-      assert_equal h.groups.fetch(:cat), h.groups[:cat]
-      assert_equal 'cat-00003', h.groups.fetch(:cat).hosts.last
-      assert_equal 'dog-00005', h.groups.fetch(:dog).hosts.last
+      assert_equal 8, plan.groups.hosts.size
+      assert_equal plan.groups.fetch(:cat), plan.groups[:cat]
+      assert_equal 'cat-00003', plan.groups.fetch(:cat).hosts.last
+      assert_equal 'dog-00005', plan.groups.fetch(:dog).hosts.last
     end
 
     should "use by-host strategy" do
