@@ -1,12 +1,9 @@
 class Hadouken::Strategy::ByGroupParallel < Hadouken::Strategy::Base
   def host_strategy
-
-
     return @balanced if @balanced
 
     # transform a array of groups, hosts into a new array that balances
     # hosts from each group into a single array.
-
     @balanced = []
     regroup  = []
     groups   = []

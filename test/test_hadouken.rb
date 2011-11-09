@@ -18,9 +18,10 @@ class TestHadouken < Test::Unit::TestCase
     end
 
     should "create a collection of groups" do
-      h = Hadouken::Plan.new
-      h.add_group Hadouken::Group.new(:name => :cat, :range => (1..3), :pattern => "cat-%05d")
-      h.add_group Hadouken::Group.new(:name => :dog, :range => (1..5), :pattern => "dog-%05d")
+      plan = Hadouken::Plan.new
+      plan.verbose = true
+      plan.add_group Hadouken::Group.new(:name => :cat, :range => (1..3), :pattern => "cat-%05d")
+      plan.add_group Hadouken::Group.new(:name => :dog, :range => (1..5), :pattern => "dog-%05d")
     
       assert_equal 8, h.groups.hosts.size
       assert_equal h.groups.fetch(:cat), h.groups[:cat]
@@ -30,6 +31,7 @@ class TestHadouken < Test::Unit::TestCase
 
     should "use by-host strategy" do
       plan = Hadouken::Plan.new
+      plan.verbose = true
       plan.add_group Hadouken::Group.new(:name => :cat, :range => (1..3), :pattern => "cat-%05d")
       plan.add_group Hadouken::Group.new(:name => :dog, :range => (1..3), :pattern => "dog-%05d")
 
@@ -43,6 +45,7 @@ class TestHadouken < Test::Unit::TestCase
 
     should "use by-host strategy with two at a time" do
       plan = Hadouken::Plan.new
+      plan.verbose = true
       plan.add_group Hadouken::Group.new(:name => :cat, :range => (1..3), :pattern => "cat-%05d")
       plan.add_group Hadouken::Group.new(:name => :dog, :range => (1..3), :pattern => "dog-%05d")
 
@@ -60,6 +63,7 @@ class TestHadouken < Test::Unit::TestCase
 
     should "use by-group strategy with two at a time" do
       plan = Hadouken::Plan.new
+      plan.verbose = true
       plan.add_group Hadouken::Group.new(:name => :cat, :range => (1..3), :pattern => "cat-%05d")
       plan.add_group Hadouken::Group.new(:name => :dog, :range => (1..3), :pattern => "dog-%05d")
 
@@ -76,6 +80,7 @@ class TestHadouken < Test::Unit::TestCase
     
     should "use by-group-parallel strategy" do
       plan = Hadouken::Plan.new
+      plan.verbose = true
       plan.name = :pet_store
       plan.add_group Hadouken::Group.new(:name => :cat, :range => (1..3), :pattern => "cat-%05d")
       plan.add_group Hadouken::Group.new(:name => :dog, :range => (1..3), :pattern => "dog-%05d")
@@ -91,17 +96,23 @@ class TestHadouken < Test::Unit::TestCase
       crazy << [ cats[2], dogs[2], hogs[2] ]
 
       plan.tasks << Hadouken::Strategy::ByHost.new(plan)
-      plan.tasks << Hadouken::Task.new({:command => "aaa", :plan => plan})
-      plan.tasks << Hadouken::Task.new({:command => "bbb", :plan => plan})
+      plan.tasks << Hadouken::Task::Command.new("aaa", :plan => plan)
+      plan.tasks.store "bbb", :plan => plan
+      plan.tasks.store Proc.new{|host|
+      }, :plan => plan
 
-      plan.tasks << Hadouken::Strategy::ByGroupParallel.new(plan, :max_hosts => 8)
-      plan.tasks << Hadouken::Task.new({:command => "doggie", :plan => plan, :group_name => :dog})
-      plan.tasks << Hadouken::Task.new({:command => "kitty",  :plan => plan, :group_name => :cat})
-      plan.tasks << Hadouken::Task.new({:command => "pig",    :plan => plan, :group_name => :hog})
+      plan.tasks << Hadouken::Strategy::ByGroupParallel.new(plan, :max_hosts => 4, :traversal => :depth)
+      plan.tasks << Hadouken::Task::Command.new("doggie", :plan => plan, :group_name => :dog)
+      plan.tasks << Hadouken::Task::Command.new("kitty",  :plan => plan, :group_name => :cat)
+      plan.tasks << Hadouken::Task::Command.new("pig",    :plan => plan, :group_name => :hog)
+      plan.tasks.store Proc.new{|host|
+        puts "**************** #{host} ******************"
+      }, :plan => plan
 
       Hadouken::Executor.run!(plan)
-
     end
+
+
 
   end
 end

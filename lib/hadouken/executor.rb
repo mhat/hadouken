@@ -1,6 +1,5 @@
 class Hadouken::Executor
 
-
   class Phase
     attr_accessor :strategy
     attr_accessor :tasks
@@ -39,7 +38,7 @@ class Hadouken::Executor
         @phases.last.strategy = task
       end
  
-      if task.is_a?(Hadouken::Task)
+      if task.is_a?(Hadouken::Task::Base)
         @phases.last.tasks << task
       end
     end
@@ -57,7 +56,7 @@ class Hadouken::Executor
 
     plan.groups.each do |group|
       group.hosts.each do |host|
-        puts "session.use #{host}"
+        puts "session.use #{host}" if plan.verbose?
         server = session.use host
         @server_map[host] = server
       end
@@ -75,20 +74,20 @@ class Hadouken::Executor
       hosts_with_tasks = {}
       host_sets        = strategy.host_strategy
 
-      puts "// #{phase_index} : #{strategy}"
+      puts "// #{phase_index} : #{strategy}" if plan.verbose?
 
       ## assign work
       host_sets.each do |host_set|
-        puts "!! #{host_set.join(', ')}"
+        puts "!! #{host_set.join(', ')}" if plan.verbose?
       
         host_set.each do |host|
           hosts_with_tasks[host] ||= []
 
-          phase.tasks.each_with_index do |task, izx|
+          phase.tasks.each do |task|
             # if this is not a group task then assign it to the host OR if
             # this is a group task and the host is part of the task-group,
             # then assign the task to the host
-            if !task.group_task? || (task.group_task? && task.group.has_host?(host))
+            if !task.group? || (task.group? && task.group.has_host?(host))
               hosts_with_tasks[host] <<  task
             end
           end
@@ -116,10 +115,8 @@ class Hadouken::Executor
   private
 
   def execute_depth_traversal!(host_sets, hosts_with_tasks)
-
     # run all of the commands assigned to the hosts in a host_set then 
     # move on to the next host set. rinse. repeat.
-
     host_sets.each do |host_set|
       host_set = host_set.dup
 
@@ -131,15 +128,20 @@ class Hadouken::Executor
           if ! task = hosts_with_tasks[host].shift
             host_set.delete(host)
           else
-            puts "session.on(#{host}).exec(#{task.command})"
-            session.on(@server_map[host]).exec(task.command)
+            if task.is_a?(Hadouken::Task::Callback)
+              puts "callback for (#{host})" if plan.verbose?
+              task.call(:host => host) unless plan.dry_run?
+            else 
+              puts "session.on(#{host}).exec(#{task.command})" if plan.verbose?
+              session.on(@server_map[host]).exec(task.command) unless plan.dry_run?
+            end
             commands_in_set += 1
           end
         end
 
         if commands_in_set != 0
-          puts "session.loop #{commands_in_set}"
-          session.loop 
+          puts "session.loop #{commands_in_set}" if plan.verbose?
+          session.loop unless plan.dry_run?
         end
       end
     end
@@ -149,15 +151,21 @@ class Hadouken::Executor
   def execute_breadth_traversal!(host_sets, hosts_with_tasks)
     # perform whatever tasks have been assigned; i try to do as much as
     # possible in parallel within the terms of the current strategy.
+
     while hosts_with_tasks.any? 
       host_sets.each do |host_set|
         commands_in_set = 0
         host_set.each do |host|
           if hosts_with_tasks.has_key?(host)
             if task = hosts_with_tasks[host].shift
+              if task.is_a?(Hadouken::Task::Callback)
+                puts "callback for (#{host})" if plan.verbose?
+                task.call(:host => host) unless plan.dry_run?
+              else 
+                puts "session.on(#{host}).exec(#{task.command})" if plan.verbose?
+                session.on(@server_map[host]).exec(task.command) unless plan.dry_run?
+              end
               commands_in_set += 1
-              puts "session.on(#{host}).exec(#{task.command})"
-              session.on(@server_map[host]).exec(task.command)
             else
               hosts_with_tasks.delete(host)
             end
@@ -166,8 +174,8 @@ class Hadouken::Executor
        
         # wait for the work assigned to complete before performing more work.
         if commands_in_set > 0
-          puts "session.loop #{commands_in_set}"
-          session.loop
+          puts "session.loop #{commands_in_set}" if plan.verbose?
+          session.loop unless plan.dry_run?
         end
       end
     end

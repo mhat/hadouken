@@ -8,6 +8,8 @@ require 'hadouken/strategy/base'
 require 'hadouken/strategy/by_host'
 require 'hadouken/strategy/by_group'
 require 'hadouken/strategy/by_group_parallel'
+require 'hadouken/task'
+require 'hadouken/tasks'
 
 require 'net/ssh/multi'
 
@@ -15,6 +17,9 @@ class Hadouken::Plan
   attr_accessor :name
   attr_accessor :base
   attr_accessor :user
+
+  attr_accessor :dry_run
+  attr_accessor :verbose
   
   def initialize
     @tasks  = Hadouken::Tasks.new
@@ -33,72 +38,16 @@ class Hadouken::Plan
     @tasks
   end
 
-  def add_task(t)
-    @tasks.store(t)
+  def add_task(t, opts)
+    @tasks.store(t, opts)
   end
 
-
-  def wait
+  def dry_run?
+    !!@dry_run
   end
+
+  def verbose?
+    !!@verbose
+  end
+
 end
-
-
-
-class Hadouken::Tasks
-  include Enumerable
-
-  def initialize
-    @tasks = []
-  end
-
-  def each
-    @tasks.each do |task|
-      yield task
-    end
-  end
-
-  def << (task)
-    store task
-  end
-
-  def store(task)
-    ## FIXME
-    @tasks << task #case task.class
-    ##  when String                   : Hadouken::Task.new(task)
-    ##  when Array                    : Hadouken::Task.new(task)
-    ##  when Hadouken::Strategy::Base : task
-    ##  when Hadouken::Task           : task  
-    ##  else raise ArgumentError.new("unknown task_class=#{task.class}")
-    ##end
-  end
-end
-
-class Hadouken::Task
-  attr_reader :command
-  attr_reader :group_name
-  attr_reader :plan
-  
-  def initialize(opts)
-    @group_name = opts[:group_name]
-    @plan       = opts[:plan]
-    @command    = opts[:command] #case opts[:command].class
-    ## FIXME
-    ##  when Proc   : opts[:command] 
-    ##  when String : opts[:command] 
-    ##  when Array  : opts[:command].join(" && ")
-    ##  else          raise ArgumentError
-    ##end
-  end
-
-  def group
-    plan.groups.fetch(group_name)
-  end
-
-  def group_task?
-    !! @group_name
-  end
-end
-
-
-
-
