@@ -2,8 +2,8 @@ hadouken - soon
 
 
     plan      = Hadouken::Plan.new
-    plan.name = "drop_wizardie"
-    plan.user = "drop_wizardie"
+    plan.name = "wizardie"
+    plan.user = "wizardie"
     plan.base = "/opt/drop_wizardie"
    
     # do nothing, but be verbose about it
@@ -29,13 +29,18 @@ hadouken - soon
     # - verify  service
     #
     plan.tasks       << Hadouken::Strategy::ByHost.new(plan, :max_hosts => 2, :traversal => :depth)
-    plan.tasks.store "restart wizardy", :group => :api
+    plan.tasks.store "restart wizardie-api", :group => :api
     plan.tasks.store Proc.new { |host|
       10.times do
         response = Typhous::Request.get("http://#{host}:8081/healthcheck")
         break if response.status_code == 200
       end
     }, :group => :api
+    
+    # finally restart the webs as fast as possible
+    #
+    plan.tasks       << Hadouken::Strategy::ByHost.new(plan)
+    plan.tasks.store "restart windard-web, :group => :web
     
     plan.run!
     
