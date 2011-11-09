@@ -19,18 +19,18 @@ hadouken - soon
     # download latest.tgz from our artifact repository
     # runs in parallel on all hosts
     #
-    plan.tasks       << Hadouken::Strategy::ByHost.new(plan)
-    plan.tasks.store "curl -sSfL -output /tmp/latest.tgz https://artifact.repository.example.com/latest.tgz"
-    plan.tasks.store "mv /tmp/latest.tgz #{plan.base}/latest.tgz"
+    plan.tasks.add Hadouken::Strategy::ByHost.new(plan)
+    plan.tasks.add "curl -sSfL -output /tmp/latest.tgz https://artifact.repository.example.com/latest.tgz"
+    plan.tasks.add "mv /tmp/latest.tgz #{plan.base}/latest.tgz"
 
 
     # runs commands depth first on the api hosts, two at a time
     # - restart service
     # - verify  service
     #
-    plan.tasks       << Hadouken::Strategy::ByHost.new(plan, :max_hosts => 2, :traversal => :depth)
-    plan.tasks.store "restart wizardie-api", :group => :api
-    plan.tasks.store Proc.new { |host|
+    plan.tasks.add Hadouken::Strategy::ByHost.new(plan, :max_hosts => 2, :traversal => :depth)
+    plan.tasks.add "restart wizardie-api", :group => :api
+    plan.tasks.add Proc.new { |host|
       10.times do
         response = Typhous::Request.get("http://#{host}:8081/healthcheck")
         break if response.status_code == 200
@@ -39,8 +39,8 @@ hadouken - soon
     
     # finally restart the webs as fast as possible
     #
-    plan.tasks       << Hadouken::Strategy::ByHost.new(plan)
-    plan.tasks.store "restart windard-web, :group => :web
+    plan.tasks.add Hadouken::Strategy::ByHost.new(plan)
+    plan.tasks.add "restart windard-web, :group => :web
     
     plan.run!
     
