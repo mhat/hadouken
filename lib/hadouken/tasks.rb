@@ -11,11 +11,7 @@ class Hadouken::Tasks
     end
   end
 
-  def << (task, opts={})
-    store task, opts
-  end
-
-  def store(task, opts={})
+  def add(task, opts={})
     @tasks << Hadouken::Task::Base.create!(task, opts)
   end
 end

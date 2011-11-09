@@ -95,17 +95,17 @@ class TestHadouken < Test::Unit::TestCase
       crazy << [ cats[1], dogs[1], hogs[1] ]
       crazy << [ cats[2], dogs[2], hogs[2] ]
 
-      plan.tasks << Hadouken::Strategy::ByHost.new(plan)
-      plan.tasks << Hadouken::Task::Command.new("aaa", :plan => plan)
-      plan.tasks.store "bbb", :plan => plan
-      plan.tasks.store Proc.new{|host|
+      plan.tasks.add Hadouken::Strategy::ByHost.new(plan)
+      plan.tasks.add Hadouken::Task::Command.new("aaa", :plan => plan)
+      plan.tasks.add "bbb", :plan => plan
+      plan.tasks.add Proc.new{|host|
       }, :plan => plan
 
-      plan.tasks << Hadouken::Strategy::ByGroupParallel.new(plan, :max_hosts => 4, :traversal => :depth)
-      plan.tasks << Hadouken::Task::Command.new("doggie", :plan => plan, :group_name => :dog)
-      plan.tasks << Hadouken::Task::Command.new("kitty",  :plan => plan, :group_name => :cat)
-      plan.tasks << Hadouken::Task::Command.new("pig",    :plan => plan, :group_name => :hog)
-      plan.tasks.store Proc.new{|host|
+      plan.tasks.add Hadouken::Strategy::ByGroupParallel.new(plan, :max_hosts => 4, :traversal => :depth)
+      plan.tasks.add Hadouken::Task::Command.new("doggie", :plan => plan, :group_name => :dog)
+      plan.tasks.add Hadouken::Task::Command.new("kitty",  :plan => plan, :group_name => :cat)
+      plan.tasks.add Hadouken::Task::Command.new("pig",    :plan => plan, :group_name => :hog)
+      plan.tasks.add Proc.new{|host|
         puts "**************** #{host} ******************"
       }, :plan => plan
 
