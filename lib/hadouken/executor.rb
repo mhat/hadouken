@@ -51,7 +51,11 @@ class Hadouken::Executor
   end
 
   def session!
-    @session   = Net::SSH::Multi.start
+    @session = Net::SSH::Multi.start(:on_error => Proc.new{ |server|
+      host = Hadouken::Hosts.get(server.host)
+      host.history.add "ssh.connection.new", :fail
+      host.disable!
+    })
 
     plan.groups.each do |group|
       group.hosts.each do |host|
