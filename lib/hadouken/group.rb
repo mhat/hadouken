@@ -15,7 +15,9 @@ class Hadouken::Group
   alias :size :count
 
   def hosts
-    @range.map{|idx| "#{@pattern}" % [ idx ] }
+    @hosts ||= @range.map{|idx| "#{@pattern}" % [ idx ] }.map do |hostname|
+      Hadouken::Hosts.add(hostname)
+    end
   end
 
   def has_host?(name)

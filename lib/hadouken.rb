@@ -4,6 +4,7 @@ module Hadouken::Strategy; end;
 require 'hadouken/executor'
 require 'hadouken/group'
 require 'hadouken/groups'
+require 'hadouken/host'
 require 'hadouken/strategy/base'
 require 'hadouken/strategy/by_host'
 require 'hadouken/strategy/by_group'
@@ -50,4 +51,10 @@ class Hadouken::Plan
     !!@verbose
   end
 
+end
+
+module Hadouken
+  def self.logger
+    @@logger ||= Logger.new(STDOUT)
+  end
 end

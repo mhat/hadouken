@@ -1,13 +1,13 @@
 class Hadouken::Strategy::ByGroupParallel < Hadouken::Strategy::Base
   def host_strategy
-    return @balanced if @balanced
+    return @host_sets if @host_sets
 
     # transform a array of groups, hosts into a new array that balances
     # hosts from each group into a single array.
-    @balanced = []
-    regroup  = []
-    groups   = []
-    max_size =  0
+    @host_sets = []
+    regroup    = []
+    groups     = []
+    max_size   =  0
 
     plan.groups.each do |group|
       hosts     = group.hosts
@@ -25,9 +25,8 @@ class Hadouken::Strategy::ByGroupParallel < Hadouken::Strategy::Base
       end
     end
 
-    slice = max_hosts || balanced.size
-    regroup.each_slice(slice) do |host_slice|
-      @balanced << host_slice
+    regroup.each_slice(max_size) do |host_slice|
+      @host_sets << host_slice
     end
 
     @balanced

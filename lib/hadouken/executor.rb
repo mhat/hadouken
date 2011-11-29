@@ -51,14 +51,15 @@ class Hadouken::Executor
   end
 
   def session!
-    @session    = Net::SSH::Multi.start
-    @server_map = {}
+    @session   = Net::SSH::Multi.start
 
     plan.groups.each do |group|
       group.hosts.each do |host|
-        puts "session.use #{host}" if plan.verbose?
-        server = session.use host
-        @server_map[host] = server
+        unless host.server
+          Hadouken.logger.debug "session.use #{host}"
+          server      = session.use host.to_s
+          host.server = server
+        end
       end
     end
 
@@ -73,12 +74,11 @@ class Hadouken::Executor
       strategy         = phase.strategy
       hosts_with_tasks = {}
       host_sets        = strategy.host_strategy
-
-      puts "// #{phase_index} : #{strategy}" if plan.verbose?
+      Hadouken.logger.info "idx:#{phase_index}, strategy=#{strategy}"
 
       ## assign work
       host_sets.each do |host_set|
-        puts "!! #{host_set.join(', ')}" if plan.verbose?
+        Hadouken.logger.info "hosts=#{host_set.join(', ')}"
       
         host_set.each do |host|
           hosts_with_tasks[host] ||= []
@@ -102,70 +102,88 @@ class Hadouken::Executor
     end
   end
 
-  # our next trick is, we need to make it possible for a strategy to run in one
-  # of two ways: breadth or depth
-  # depth   - run every command assigned to a batch of hosts before moving on
-  #           to the next batch of hosts
-  # breadth - run each command on all hosts, in batches, before moving on to
-  #           the next command
-  #
-  # or maybe someone will want a hybrid approach and this should be pushed up
-  # into the strategy somehow?
-
   private
-
+require 'pp'
   def execute_depth_traversal!(host_sets, hosts_with_tasks)
     # run all of the commands assigned to the hosts in a host_set then 
     # move on to the next host set. rinse. repeat.
+
     host_sets.each do |host_set|
-      host_set = host_set.dup
-
-      while host_set.any?
-        commands_in_set = 0
+      while hosts_with_tasks.values_at(*host_set.map).select{|t| t.any?}.any?
+        channels = []
         host_set.each do |host|
-          next unless hosts_with_tasks.has_key?(host)
+          # not all hosts will necessarily have the same number of tasks
+          next unless hosts_with_tasks[host].any?
+          next unless task = hosts_with_tasks[host].shift
 
-          if ! task = hosts_with_tasks[host].shift
-            host_set.delete(host)
-          else
-            if task.is_a?(Hadouken::Task::Callback)
-              puts "callback for (#{host})" if plan.verbose?
-              task.call(:host => host) unless plan.dry_run?
-            else 
-              puts "session.on(#{host}).exec(#{task.command})" if plan.verbose?
-              session.on(@server_map[host]).exec(task.command) unless plan.dry_run?
+          case task
+            when Hadouken::Task::Callback : Hadouken.logger.debug "callback for #{host}"
+            when Hadouken::Task::Command  : Hadouken.logger.debug "session.on(#{host}).exec(#{task.command})"
+          end
+
+          if ! plan.dry_run?
+            if ! host.enabled?
+              case task
+                when Hadouken::Task::Callback : host.history.add task.to_s,    :noop
+                when Hadouken::Task::Command  : host.history.add task.command, :noop
+              end
+            else
+              case task
+              when Hadouken::Task::Callback 
+                ret = task.call(:host => host)
+                host.history.add task.to_s, ret
+                host.disable! unless ret == true
+
+              when Hadouken::Task::Command 
+                Hadouken.logger.info "running #{task.command} on #{host}"
+                channels << [task.command, session.on(host.server).exec(task.command)]
+              end
             end
-            commands_in_set += 1
           end
         end
 
-        if commands_in_set != 0
-          puts "session.loop #{commands_in_set}" if plan.verbose?
-          session.loop unless plan.dry_run?
+        if channels.count != 0
+          Hadouken.logger.info "waiting for #{channels.count} commands to execute"
+          next if plan.dry_run?
+          session.loop
+          channels.each do |command, channel|
+            channel.each do |subchannel| 
+              host = Hadouken::Hosts.get(subchannel[:host])
+              host.history.add(command, subchannel[:exit_status])
+
+              unless subchannel[:exit_status] == 0
+                Hadouken.logger.debug "got status=#{subchannel[:exit_status]} on #{subchannel[:host]}"
+                host.disable!
+              end
+            end
+          end
         end
-      end
-    end
-  end
+
+      end # while hosts_with_tasks
+    end # host_sets.each
+  end 
 
 
   def execute_breadth_traversal!(host_sets, hosts_with_tasks)
     # perform whatever tasks have been assigned; i try to do as much as
     # possible in parallel within the terms of the current strategy.
 
-    while hosts_with_tasks.any? 
+    while hosts_with_tasks.any?
+
       host_sets.each do |host_set|
-        commands_in_set = 0
+        channels = []
         host_set.each do |host|
           if hosts_with_tasks.has_key?(host)
             if task = hosts_with_tasks[host].shift
               if task.is_a?(Hadouken::Task::Callback)
-                puts "callback for (#{host})" if plan.verbose?
+                Hadouken.logger.debug "callback for #{host}"
                 task.call(:host => host) unless plan.dry_run?
               else 
-                puts "session.on(#{host}).exec(#{task.command})" if plan.verbose?
-                session.on(@server_map[host]).exec(task.command) unless plan.dry_run?
+                Hadouken.logger.debug "session.on(#{host}).exec(#{task.command})"
+                unless plan.dry_run?
+                  channels << [task.command, session.on(host.server).exec(task.command)] 
+                end
               end
-              commands_in_set += 1
             else
               hosts_with_tasks.delete(host)
             end
@@ -173,12 +191,26 @@ class Hadouken::Executor
         end
        
         # wait for the work assigned to complete before performing more work.
-        if commands_in_set > 0
-          puts "session.loop #{commands_in_set}" if plan.verbose?
-          session.loop unless plan.dry_run?
-        end
-      end
-    end
+        if channels.count > 0
+          Hadouken.logger.info "waiting for #{channels.count} commands to execute"
+          next if plan.dry_run?
+
+          session.loop
+          channels.each do |command, channel|
+            channel.each do |subchannel| 
+              host = Hadouken::Hosts.get(subchannel[:host])
+              host.history.add(command, subchannel[:exit_status])
+
+              unless subchannel[:exit_status] == 0
+                Hadouken.logger.debug "got status=#{subchannel[:exit_status]} on #{subchannel[:host]}"
+                host.disable!
+              end
+            end
+          end
+        end 
+
+      end # host_sets.each
+    end # while
   end
 
 end
