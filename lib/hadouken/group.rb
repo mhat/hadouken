@@ -10,7 +10,7 @@ class Hadouken::Group
   end
 
   def count
-    @count  ||= hosts.size
+    @count ||= hosts.size
   end
   alias :size :count
 
@@ -23,6 +23,10 @@ class Hadouken::Group
   def has_host?(name)
     @hosts_by_name ||= hosts.inject({}){|h,host| h[host]=true; h}
     @hosts_by_name.has_key?(name)
+  end
+
+  def self.create!(name, opts)
+    new(opts.merge(:name => name))
   end
 
 end

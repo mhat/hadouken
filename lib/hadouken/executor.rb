@@ -53,6 +53,7 @@ class Hadouken::Executor
   def session!
     @session = Net::SSH::Multi.start(:on_error => Proc.new{ |server|
       host = Hadouken::Hosts.get(server.host)
+      Hadouken.logger.debug "error with #{server.host}, disabling"
       host.history.add "ssh.connection.new", :fail
       host.disable!
     })
@@ -181,7 +182,8 @@ require 'pp'
             if task = hosts_with_tasks[host].shift
               if task.is_a?(Hadouken::Task::Callback)
                 Hadouken.logger.debug "callback for #{host}"
-                task.call(:host => host) unless plan.dry_run?
+                ret = task.call(:host => host) unless plan.dry_run?
+                host.history.add(task.to_s, ret)
               else 
                 Hadouken.logger.debug "session.on(#{host}).exec(#{task.command})"
                 unless plan.dry_run?

@@ -22,6 +22,12 @@ module Hadouken::Hosts
       yield host
     end
   end
+
+  def self.disable_all!
+    each do |host|
+      host.disable! if host.enabled?
+    end
+  end
 end
 
 class Hadouken::Host

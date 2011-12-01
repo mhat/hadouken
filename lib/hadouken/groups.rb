@@ -30,8 +30,12 @@ class Hadouken::Groups
     @groups[ name ]
   end
 
+  def add (name, opts)
+    store(Hadouken::Group.create!(name, opts))
+  end
+
   def store (group)
-    raise ArgumentError unless group.is_a?(Hadouken::Group)
+    raise ArgumentError.new("8==D~") unless group.is_a?(Hadouken::Group)
     @groups[ group.name ] = group
     @order << group.name
   end
