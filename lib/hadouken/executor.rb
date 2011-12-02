@@ -61,8 +61,8 @@ class Hadouken::Executor
     plan.groups.each do |group|
       group.hosts.each do |host|
         unless host.server
-          Hadouken.logger.debug "session.use #{host}"
-          server      = session.use host.to_s
+          Hadouken.logger.debug "session.use #{plan.user}@#{host}"
+          server      = session.use "#{plan.user}@#{host}"
           host.server = server
         end
       end
