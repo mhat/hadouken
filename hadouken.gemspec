@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{hadouken}
-  s.version = "0.1.0.pre"
+  s.version = "0.1.1.pre"
 
   s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
   s.authors = ["Matt Knopp"]
@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
     "README.md",
     "Rakefile",
     "VERSION",
+    "hadouken.gemspec",
     "lib/hadouken.rb",
     "lib/hadouken/executor.rb",
     "lib/hadouken/group.rb",
