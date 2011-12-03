@@ -14,7 +14,12 @@ class Hadouken::Executor
     exec = Hadouken::Executor.new(plan)
     exec.phases
     exec.session!
-    exec.execute!
+
+    if Hadouken::Hosts.any?
+      exec.execute!
+    else
+      Hadouken.logger.error "No hosts have been defined, this deploy is boring!"
+    end
   end
 
 

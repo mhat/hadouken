@@ -17,6 +17,10 @@ module Hadouken::Hosts
     @@hosts.keys.count
   end
 
+  def self.any?
+    @@hosts.keys.any?
+  end
+
   def self.each
     @@hosts.each do |hostname, host|
       yield host
