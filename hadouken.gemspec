@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{hadouken}
-  s.version = "0.1.1.pre"
+  s.version = "0.1.2.pre"
 
   s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
   s.authors = ["Matt Knopp"]
-  s.date = %q{2011-12-01}
+  s.date = %q{2012-01-05}
   s.description = %q{run commands over ssh in a way that makes sense for deploying artifacts}
   s.email = %q{mknopp@yammer-inc.com}
   s.extra_rdoc_files = [
@@ -38,6 +38,7 @@ Gem::Specification.new do |s|
     "lib/hadouken/strategy/by_host.rb",
     "lib/hadouken/task.rb",
     "lib/hadouken/tasks.rb",
+    "lib/net/ssh/multi/session_actions.rb",
     "test/helper.rb",
     "test/test_hadouken.rb"
   ]

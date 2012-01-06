@@ -15,6 +15,7 @@ require 'hadouken/task'
 require 'hadouken/tasks'
 
 require 'net/ssh/multi'
+require 'hadouken/ext/net_ssh_multi_session_actions'
 
 module Hadouken
   def self.logger

@@ -146,7 +146,7 @@ require 'pp'
 
               when Hadouken::Task::Command 
                 Hadouken.logger.info "running #{task.command} on #{host}"
-                channels << [task.command, session.on(host.server).exec(task.command)]
+                channels << [task.command, session.on(host.server).hadouken_exec(task.command)]
               end
             end
           end
@@ -192,7 +192,7 @@ require 'pp'
               else 
                 Hadouken.logger.debug "session.on(#{host}).exec(#{task.command})"
                 unless plan.dry_run?
-                  channels << [task.command, session.on(host.server).exec(task.command)] 
+                  channels << [task.command, session.on(host.server).hadouken_exec(task.command)] 
                 end
               end
             else
