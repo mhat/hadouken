@@ -66,14 +66,35 @@ class Hadouken::Host
   class History
     def initialize
       @history = []
+      @any_failed_commands = false
     end
     def add(command, status, epoch=Time.now.to_f)
       @history << [ command, status, epoch ]
+      if !@any_failed_commands
+        @any_failed_commands = status != 0
+      end
+    end
+    def any_failed_commands?
+      @any_failed_commands
     end
     def each
       @history.each do |command, status, epoch|
         yield command, status, epoch
       end
+    end
+    def to_json
+      history_arr = []
+      each do |command, status, epoch|
+        history_arr.push({
+          :command => command,
+          :status => status,
+          :time => epoch
+        })
+      end
+      Yajl::Encoder.encode(history_arr)
+    end
+    def size
+      @history.size
     end
   end
 end

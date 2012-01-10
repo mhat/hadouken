@@ -16,6 +16,7 @@ GEM
     rake (0.9.2)
     rcov (0.9.10)
     shoulda (2.11.3)
+    yajl-ruby (1.0.0)
 
 PLATFORMS
   ruby
@@ -28,3 +29,4 @@ DEPENDENCIES
   net-ssh-multi
   rcov
   shoulda
+  yajl-ruby
