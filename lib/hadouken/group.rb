@@ -7,6 +7,7 @@ class Hadouken::Group
     @name    = opts[:name]
     @range   = opts[:range]
     @pattern = opts[:pattern]
+    @history_filepath = opts[:history_filepath]
   end
 
   def count
@@ -16,7 +17,7 @@ class Hadouken::Group
 
   def hosts
     @hosts ||= @range.map{|idx| "#{@pattern}" % [ idx ] }.map do |hostname|
-      Hadouken::Hosts.add(hostname)
+      Hadouken::Hosts.add({:name => hostname, :history_filepath => @history_filepath})
     end
   end
 

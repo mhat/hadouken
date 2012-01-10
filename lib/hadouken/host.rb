@@ -1,8 +1,8 @@
 module Hadouken::Hosts
   @@hosts = {}
 
-  def self.add(hostname)
-    @@hosts[hostname] ||= Hadouken::Host.new(hostname)
+  def self.add(opts={})
+    @@hosts[opts[:name]] ||= Hadouken::Host.new(opts)
   end
   
   def self.get(hostname)
@@ -39,10 +39,10 @@ class Hadouken::Host
   attr_reader   :history
   attr_accessor :server
 
-  def initialize(name)
-    @name    = name
+  def initialize(opts={})
+    @name    = opts[:name]
     @enabled = true
-    @history = History.new
+    @history = History.new({:history_filepath => "#{opts[:history_filepath]}/#{@name}"})
   end
 
   def disable!
@@ -64,37 +64,38 @@ class Hadouken::Host
   end
 
   class History
-    def initialize
+    def initialize(opts={})
+      @history_filepath = "#{opts[:history_filepath]}.json"
       @history = []
-      @any_failed_commands = false
     end
     def add(command, status, epoch=Time.now.to_f)
       @history << [ command, status, epoch ]
-      if !@any_failed_commands
-        @any_failed_commands = status != 0
-      end
+      update_history_file(command_to_hash(command, status, epoch))
     end
-    def any_failed_commands?
-      @any_failed_commands
+    def command_to_hash(command, status, epoch)
+      {
+        :command => command,
+        :status  => status,
+        :time    => epoch
+      }
     end
     def each
       @history.each do |command, status, epoch|
         yield command, status, epoch
       end
     end
+    def update_history_file(contents)
+      File.open(@history_filepath, 'a') do |history_file|
+        history_file.write(Yajl::Encoder.encode(contents))
+        history_file.write("\n")
+      end
+    end
     def to_json
       history_arr = []
       each do |command, status, epoch|
-        history_arr.push({
-          :command => command,
-          :status => status,
-          :time => epoch
-        })
+        history_arr.push(command_to_hash(command, status, epoch))
       end
       Yajl::Encoder.encode(history_arr)
-    end
-    def size
-      @history.size
     end
   end
 end
