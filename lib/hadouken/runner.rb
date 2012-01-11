@@ -2,7 +2,7 @@ class Hadouken::Runner
 
   attr_reader :plan
   attr_reader :env
-  attr_reader :history
+  attr_reader :interactive
 
 
   def initialize(name)
@@ -10,6 +10,7 @@ class Hadouken::Runner
     @plan.name = name
     @args      = self.class.optparse
     @env       = @args[:env]
+    @interactive = @args[:interactive]
 
     @plan.dry_run         = true          if @args[:dry_run]
     Hadouken.logger.level = @args[:level] || Logger::INFO
@@ -46,7 +47,7 @@ class Hadouken::Runner
     yield plan
 
     ts0  = Time.now
-    Hadouken::Executor.run!(plan)
+    Hadouken::Executor.run!({:plan => plan, :interactive => runner.interactive})
     te0  = Time.now
 
     Hadouken.logger.info "plan executed in %0.2f" % (te0 - ts0)
@@ -60,8 +61,9 @@ class Hadouken::Runner
       opts.separator ""
       opts.separator "options:"
       
-      opts.on("--env ENV",      "stage|thunderdome|production" ) {|o| args[:env    ] = o }
-      opts.on("--dry-run",      "take no action"               ) {|o| args[:dry_run] = o }
+      opts.on("--interactive",  "output stdout/stderr to console") {|o| args[:interactive] = o}
+      opts.on("--env ENV",      "stage|thunderdome|production" )   {|o| args[:env    ] = o}
+      opts.on("--dry-run",      "take no action"               )   {|o| args[:dry_run] = o}
       opts.on("--level LEVEL",  "debug|info|warn|error|fatal"  ) do |o|
         if o !~ /^(debug|info|warn|error|fatal)$/i
           puts "Sorry, I don't know what that log level is ..."

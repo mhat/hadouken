@@ -72,33 +72,37 @@ class Hadouken::Host
       @hostname = opts[:hostname]
       @history = []
     end
-    def add(command, status, epoch=Time.now.to_f)
-      @history << [ command, status, epoch ]
+    def add(command, status, stdout=nil, stderr=nil, epoch=Time.now.to_f)
+      stdoutJoined = stdout ? stdout.join("\n") : nil
+      stderrJoined = stderr ? stderr.join("\n") : nil
+      @history << [command, status, epoch, stdoutJoined, stderrJoined]
       File.open("#{Hadouken::Host.history_filepath}/#{@hostname}.log", 'a') do |history_file|
-        history_file.write(Yajl::Encoder.encode(command_to_hash(command, status, epoch)))
+        history_file.write(Yajl::Encoder.encode(command_to_hash(command, status, epoch, stdoutJoined, stderrJoined)))
         history_file.write("\n")
       end
     end
     def each
-      @history.each do |command, status, epoch|
-        yield command, status, epoch
+      @history.each do |command, status, epoch, stdout, stderr|
+        yield command, status, epoch, stdout, stderr
       end
     end
     def to_json
       history_arr = []
-      each do |command, status, epoch|
-        history_arr.push(command_to_hash(command, status, epoch))
+      each do |command, status, epoch, stdout, stderr|
+        history_arr.push(command_to_hash(command, status, epoch, stdout, stderr))
       end
       Yajl::Encoder.encode(history_arr)
     end
 
     private
 
-    def command_to_hash(command, status, epoch)
+    def command_to_hash(command, status, epoch, stdout, stderr)
       {
         :command => command,
         :status  => status,
-        :time    => epoch
+        :time    => epoch,
+        :stdout  => stdout,
+        :stderr  => stderr
       }
     end
   end
