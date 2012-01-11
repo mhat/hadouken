@@ -65,29 +65,19 @@ class Hadouken::Host
 
   class History
     def initialize(opts={})
-      @history_filepath = "#{opts[:history_filepath]}.json"
+      @history_filepath = "#{opts[:history_filepath]}.log"
       @history = []
     end
     def add(command, status, epoch=Time.now.to_f)
       @history << [ command, status, epoch ]
-      update_history_file(command_to_hash(command, status, epoch))
-    end
-    def command_to_hash(command, status, epoch)
-      {
-        :command => command,
-        :status  => status,
-        :time    => epoch
-      }
+      File.open(@history_filepath, 'a') do |history_file|
+        history_file.write(Yajl::Encoder.encode(command_to_hash(command, status, epoch)))
+        history_file.write("\n")
+      end
     end
     def each
       @history.each do |command, status, epoch|
         yield command, status, epoch
-      end
-    end
-    def update_history_file(contents)
-      File.open(@history_filepath, 'a') do |history_file|
-        history_file.write(Yajl::Encoder.encode(contents))
-        history_file.write("\n")
       end
     end
     def to_json
@@ -96,6 +86,16 @@ class Hadouken::Host
         history_arr.push(command_to_hash(command, status, epoch))
       end
       Yajl::Encoder.encode(history_arr)
+    end
+
+    private
+
+    def command_to_hash(command, status, epoch)
+      {
+        :command => command,
+        :status  => status,
+        :time    => epoch
+      }
     end
   end
 end

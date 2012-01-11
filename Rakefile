@@ -19,8 +19,8 @@ Jeweler::Tasks.new do |gem|
   gem.license     = "MIT"
   gem.summary     = %Q{run commands over ssh in a way that makes sense for deploying artifacts}
   gem.description = %Q{run commands over ssh in a way that makes sense for deploying artifacts}
-  gem.email       = "mknopp@yammer-inc.com"
-  gem.authors     = ["Matt Knopp"]
+  gem.email       = ["mknopp@yammer-inc.com, cgray@yammer-inc.com"]
+  gem.authors     = ["Matt Knopp", "Chris Gray"]
   # dependencies defined in Gemfile
 end
 Jeweler::RubygemsDotOrgTasks.new
