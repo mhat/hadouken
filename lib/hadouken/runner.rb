@@ -32,19 +32,15 @@ class Hadouken::Runner
     runner = Hadouken::Runner.new(name)
     plan   = runner.plan
     history_filepath = "history/#{plan.name}/#{runner.env}/#{Time.now.to_i}"
+    Hadouken::Host.history_filepath = history_filepath
+    FileUtils.mkdir_p(history_filepath)
 
     # populate groups from config
     runner.config.sort{|a,b| a.to_s <=> b.to_s}.each do |group, opts|
       range   = opts[:start]..opts[:stop]
       pattern = opts[:pattern]
       Hadouken.logger.debug "runner: g=#{group}, p=#{pattern}, r=#{range}"
-      plan.groups.add(group, 
-        {
-          :range => range, 
-          :pattern => pattern, 
-          :history_filepath => history_filepath
-        })
-      FileUtils.mkdir_p(history_filepath)
+      plan.groups.add group, :range => range, :pattern => pattern
     end
 
     yield plan

@@ -42,7 +42,7 @@ class Hadouken::Host
   def initialize(opts={})
     @name    = opts[:name]
     @enabled = true
-    @history = History.new({:history_filepath => "#{opts[:history_filepath]}/#{@name}"})
+    @history = History.new(:hostname => @name)
   end
 
   def disable!
@@ -62,15 +62,19 @@ class Hadouken::Host
   def to_s
     name
   end
+  
+  class << self
+    attr_accessor :history_filepath
+  end
 
   class History
     def initialize(opts={})
-      @history_filepath = "#{opts[:history_filepath]}.log"
+      @hostname = opts[:hostname]
       @history = []
     end
     def add(command, status, epoch=Time.now.to_f)
       @history << [ command, status, epoch ]
-      File.open(@history_filepath, 'a') do |history_file|
+      File.open("#{Hadouken::Host.history_filepath}/#{@hostname}.log", 'a') do |history_file|
         history_file.write(Yajl::Encoder.encode(command_to_hash(command, status, epoch)))
         history_file.write("\n")
       end
