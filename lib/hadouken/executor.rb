@@ -23,8 +23,9 @@ class Hadouken::Executor
   end
 
 
-  def initialize(plan)
-    @plan    = plan
+  def initialize(opts={})
+    @interactive = opts[:interactive]
+    @plan    = opts[:plan]
     @session = Net::SSH::Multi.start
 
     ## TODO: find a better place for this
@@ -159,7 +160,11 @@ require 'pp'
           channels.each do |command, channel|
             channel.each do |subchannel| 
               host = Hadouken::Hosts.get(subchannel[:host])
-              host.history.add(command, subchannel[:exit_status])
+              host.history.add(command, subchannel[:exit_status], subchannel[:stdout], subchannel[:stderr])
+              if @interactive
+                Hadouken.logger.info(subchannel[:stdout].join("\n")) if subchannel[:stdout]
+                Hadouken.logger.error(subchannel[:stderr].join("\n")) if subchannel[:stderr]
+              end
 
               unless subchannel[:exit_status] == 0
                 Hadouken.logger.debug "got status=#{subchannel[:exit_status]} on #{subchannel[:host]}"
@@ -210,7 +215,11 @@ require 'pp'
           channels.each do |command, channel|
             channel.each do |subchannel| 
               host = Hadouken::Hosts.get(subchannel[:host])
-              host.history.add(command, subchannel[:exit_status])
+              host.history.add(command, subchannel[:exit_status], subchannel[:stdout], subchannel[:stderr])
+              if @interactive
+                Hadouken.logger.info(subchannel[:stdout].join("\n")) if subchannel[:stdout]
+                Hadouken.logger.error(subchannel[:stderr].join("\n")) if subchannel[:stderr]
+              end
 
               unless subchannel[:exit_status] == 0
                 Hadouken.logger.debug "got status=#{subchannel[:exit_status]} on #{subchannel[:host]}"

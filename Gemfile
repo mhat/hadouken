@@ -2,6 +2,7 @@ source "http://rubygems.org"
 
 gem "net-ssh"
 gem "net-ssh-multi"
+gem "yajl-ruby"
 
 group :development do
   gem "shoulda", ">= 0"

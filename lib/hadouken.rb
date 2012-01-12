@@ -1,6 +1,8 @@
 module Hadouken; end;
 module Hadouken::Strategy; end;
 
+require 'fileutils'
+require 'yajl'
 require 'hadouken/executor'
 require 'hadouken/group'
 require 'hadouken/groups'

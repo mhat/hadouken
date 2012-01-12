@@ -16,7 +16,7 @@ class Hadouken::Group
 
   def hosts
     @hosts ||= @range.map{|idx| "#{@pattern}" % [ idx ] }.map do |hostname|
-      Hadouken::Hosts.add(hostname)
+      Hadouken::Hosts.add({:name => hostname})
     end
   end
 

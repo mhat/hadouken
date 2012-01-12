@@ -5,13 +5,13 @@
 
 Gem::Specification.new do |s|
   s.name = %q{hadouken}
-  s.version = "0.1.2.pre"
+  s.version = "0.1.3.pre"
 
   s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
-  s.authors = ["Matt Knopp"]
-  s.date = %q{2012-01-05}
+  s.authors = ["Matt Knopp", "Chris Gray"]
+  s.date = %q{2012-01-10}
   s.description = %q{run commands over ssh in a way that makes sense for deploying artifacts}
-  s.email = %q{mknopp@yammer-inc.com}
+  s.email = ["mknopp@yammer-inc.com, cgray@yammer-inc.com"]
   s.extra_rdoc_files = [
     "LICENSE.txt",
     "README.md"
@@ -27,6 +27,7 @@ Gem::Specification.new do |s|
     "hadouken.gemspec",
     "lib/hadouken.rb",
     "lib/hadouken/executor.rb",
+    "lib/hadouken/ext/net_ssh_multi_session_actions.rb",
     "lib/hadouken/group.rb",
     "lib/hadouken/groups.rb",
     "lib/hadouken/host.rb",
@@ -38,7 +39,6 @@ Gem::Specification.new do |s|
     "lib/hadouken/strategy/by_host.rb",
     "lib/hadouken/task.rb",
     "lib/hadouken/tasks.rb",
-    "lib/net/ssh/multi/session_actions.rb",
     "test/helper.rb",
     "test/test_hadouken.rb"
   ]
@@ -54,6 +54,7 @@ Gem::Specification.new do |s|
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<net-ssh>, [">= 0"])
       s.add_runtime_dependency(%q<net-ssh-multi>, [">= 0"])
+      s.add_runtime_dependency(%q<yajl-ruby>, [">= 0"])
       s.add_development_dependency(%q<shoulda>, [">= 0"])
       s.add_development_dependency(%q<mocha>, [">= 0"])
       s.add_development_dependency(%q<bundler>, ["~> 1.0.0"])
@@ -62,6 +63,7 @@ Gem::Specification.new do |s|
     else
       s.add_dependency(%q<net-ssh>, [">= 0"])
       s.add_dependency(%q<net-ssh-multi>, [">= 0"])
+      s.add_dependency(%q<yajl-ruby>, [">= 0"])
       s.add_dependency(%q<shoulda>, [">= 0"])
       s.add_dependency(%q<mocha>, [">= 0"])
       s.add_dependency(%q<bundler>, ["~> 1.0.0"])
@@ -71,6 +73,7 @@ Gem::Specification.new do |s|
   else
     s.add_dependency(%q<net-ssh>, [">= 0"])
     s.add_dependency(%q<net-ssh-multi>, [">= 0"])
+    s.add_dependency(%q<yajl-ruby>, [">= 0"])
     s.add_dependency(%q<shoulda>, [">= 0"])
     s.add_dependency(%q<mocha>, [">= 0"])
     s.add_dependency(%q<bundler>, ["~> 1.0.0"])
