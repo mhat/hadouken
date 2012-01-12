@@ -23,7 +23,7 @@ class Hadouken::Executor
   end
 
 
-  def initialize(plan
+  def initialize(plan)
     @plan    = plan
     @session = Net::SSH::Multi.start
 
