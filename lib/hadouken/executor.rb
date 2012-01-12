@@ -161,8 +161,8 @@ require 'pp'
               host = Hadouken::Hosts.get(subchannel[:host])
               host.history.add(command, subchannel[:exit_status], subchannel[:stdout], subchannel[:stderr])
               if plan.interactive?
-                Hadouken.logger.info( subchannel[:stdout].join("\n")) if subchannel[:stdout]
-                Hadouken.logger.error(subchannel[:stderr].join("\n")) if subchannel[:stderr]
+                Hadouken.logger.info "[STDOUT] - #{host.name}: %s" % [ subchannel[:stdout].join("\n") ] if subchannel[:stdout]
+                Hadouken.logger.warn "[STDERR] - #{host.name}: %s" % [ subchannel[:stderr].join("\n") ] if subchannel[:stderr]
               end
 
               unless subchannel[:exit_status] == 0
@@ -216,8 +216,8 @@ require 'pp'
               host = Hadouken::Hosts.get(subchannel[:host])
               host.history.add(command, subchannel[:exit_status], subchannel[:stdout], subchannel[:stderr])
               if plan.interactive?
-                Hadouken.logger.info(subchannel[:stdout].join("\n")) if subchannel[:stdout]
-                Hadouken.logger.error(subchannel[:stderr].join("\n")) if subchannel[:stderr]
+                Hadouken.logger.info "[STDOUT] - #{host.name}: %s" % [ subchannel[:stdout].join("\n") ] if subchannel[:stdout]
+                Hadouken.logger.warn "[STDERR] - #{host.name}: %s" % [ subchannel[:stderr].join("\n") ] if subchannel[:stderr]
               end
 
               unless subchannel[:exit_status] == 0
