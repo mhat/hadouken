@@ -23,9 +23,8 @@ class Hadouken::Executor
   end
 
 
-  def initialize(opts={})
-    @interactive = opts[:interactive]
-    @plan    = opts[:plan]
+  def initialize(plan
+    @plan    = plan
     @session = Net::SSH::Multi.start
 
     ## TODO: find a better place for this
@@ -161,8 +160,8 @@ require 'pp'
             channel.each do |subchannel| 
               host = Hadouken::Hosts.get(subchannel[:host])
               host.history.add(command, subchannel[:exit_status], subchannel[:stdout], subchannel[:stderr])
-              if @interactive
-                Hadouken.logger.info(subchannel[:stdout].join("\n")) if subchannel[:stdout]
+              if plan.interactive?
+                Hadouken.logger.info( subchannel[:stdout].join("\n")) if subchannel[:stdout]
                 Hadouken.logger.error(subchannel[:stderr].join("\n")) if subchannel[:stderr]
               end
 
@@ -216,7 +215,7 @@ require 'pp'
             channel.each do |subchannel| 
               host = Hadouken::Hosts.get(subchannel[:host])
               host.history.add(command, subchannel[:exit_status], subchannel[:stdout], subchannel[:stderr])
-              if @interactive
+              if plan.interactive?
                 Hadouken.logger.info(subchannel[:stdout].join("\n")) if subchannel[:stdout]
                 Hadouken.logger.error(subchannel[:stderr].join("\n")) if subchannel[:stderr]
               end

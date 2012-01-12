@@ -2,7 +2,10 @@ class Hadouken::Plan
   attr_accessor :name
   attr_accessor :root
   attr_accessor :user
+
+  attr_accessor :environment
   attr_accessor :dry_run
+  attr_accessor :interactive
   attr_reader   :timestamp
   
   def initialize
@@ -23,5 +26,12 @@ class Hadouken::Plan
     !!@dry_run
   end
 
+  def interactive?
+    !!@interactive
+  end
+
+  def env
+    enviornoment
+  end
 end
 
