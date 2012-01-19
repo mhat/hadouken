@@ -1,8 +1,12 @@
 module Hadouken; end;
 module Hadouken::Strategy; end;
 
+require 'rubygems'
 require 'fileutils'
 require 'yajl'
+require 'uri'
+require 'net/ssh/multi'
+
 require 'hadouken/executor'
 require 'hadouken/group'
 require 'hadouken/groups'
@@ -16,7 +20,6 @@ require 'hadouken/strategy/by_group_parallel'
 require 'hadouken/task'
 require 'hadouken/tasks'
 
-require 'net/ssh/multi'
 require 'hadouken/ext/net_ssh_multi_session_actions'
 
 module Hadouken

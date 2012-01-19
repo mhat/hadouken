@@ -1,4 +1,9 @@
 module Hadouken::Hosts
+
+  class << self
+    attr_accessor :history_filepath
+  end
+
   @@hosts = {}
 
   def self.add(opts={})
@@ -37,7 +42,6 @@ end
 class Hadouken::Host
   attr_reader   :name
   attr_reader   :history
-  attr_accessor :server
 
   def initialize(opts={})
     @name    = opts[:name]
@@ -62,42 +66,46 @@ class Hadouken::Host
   def to_s
     name
   end
-  
-  class << self
-    attr_accessor :history_filepath
+ 
+  def history_filepath
+    File.join(Hadouken::Hosts.history_filepath, "#{name}.log")
   end
+ 
 
   class History
+    include Enumerable
+
     def initialize(opts={})
       @hostname = opts[:hostname]
-      @history = []
+      @history  = []
     end
+
     def add(command, status, stdout=nil, stderr=nil, epoch=Time.now.to_f)
       stdoutJoined = stdout ? stdout.join("\n") : nil
       stderrJoined = stderr ? stderr.join("\n") : nil
       @history << [command, status, epoch, stdoutJoined, stderrJoined]
-      File.open("#{Hadouken::Host.history_filepath}/#{@hostname}.log", 'a') do |history_file|
+      File.open(host.history_filepath, 'a') do |history_file|
         history_file.write(Yajl::Encoder.encode(command_to_hash(command, status, epoch, stdoutJoined, stderrJoined)))
         history_file.write("\n")
       end
     end
+
     def each
       @history.each do |command, status, epoch, stdout, stderr|
         yield command, status, epoch, stdout, stderr
       end
     end
+
     def to_json
-      history_arr = []
-      each do |command, status, epoch, stdout, stderr|
-        history_arr.push(command_to_hash(command, status, epoch, stdout, stderr))
+      Yajl::Encoder.encode self.map do |command, status, epoch, stdout, stderr|
+        command_to_hash(command, status, epoch, stdout, stderr)
       end
-      Yajl::Encoder.encode(history_arr)
     end
 
     private
 
     def command_to_hash(command, status, epoch, stdout, stderr)
-      {
+      return {
         :command => command,
         :status  => status,
         :time    => epoch,

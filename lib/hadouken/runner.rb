@@ -1,69 +1,59 @@
 class Hadouken::Runner
 
-  attr_reader :plan
+  attr_accessor :args
+  attr_accessor :plan
 
-  def initialize(name)
-    @plan      = Hadouken::Plan.new
-    @plan.name = name
-    @args      = self.class.optparse
-
-    # a touch odd maybe
-    @plan.environment     = @args[:env]
-    @plan.dry_run         = true if @args[:dry_run]
-    @plan.interactive     = true if @args[:interactive]
-
-    Hadouken.logger.level = @args[:level] || Logger::INFO
+  def initialize
+    @args = self.class.optparse
+    @plan = Hadouken::Plan.new
+    @plan.environment = @args[:environment]
+    @plan.dry_run     = @args[:dry_run]
+    @plan.interactive = @args[:interactive]
+    @plan.planfile    = @args[:planfile]
+    @plan.artifact    = @args[:artifact]
   end
 
-
-  def config
-    @config_file ||= "config/#{plan.name}/#{env}.yml"
-    @config      ||= begin
-      Hadouken.logger.info "using configuration in #{ @config_file }"
-      YAML.load_file(@config_file)
-    rescue => e
-      Hadouken.logger.warn "missing #{ @config_file }"
-      {} 
-    end
-  end
-
-
-  def self.run(name)
-    runner = Hadouken::Runner.new(name)
+  def self.run!
+    runner = Hadouken::Runner.new
     plan   = runner.plan
-    history_filepath = "history/#{plan.name}/#{plan.env}/#{Time.now.to_i}"
-    Hadouken::Host.history_filepath = history_filepath
-    FileUtils.mkdir_p(history_filepath)
 
-    # populate groups from config
-    runner.config.sort{|a,b| a.to_s <=> b.to_s}.each do |group, opts|
-      range   = opts[:start]..opts[:stop]
-      pattern = opts[:pattern]
-      Hadouken.logger.debug "runner: g=#{group}, p=#{pattern}, r=#{range}"
-      plan.groups.add group, :range => range, :pattern => pattern
-    end
-
-    yield plan
+    yield(plan)
 
     ts0  = Time.now
     Hadouken::Executor.run!(plan)
     te0  = Time.now
 
-    Hadouken.logger.info "plan executed in %0.2f" % (te0 - ts0)
+    logger.info "plan executed in %0.2f" % (te0 - ts0)
   end
 
   def self.optparse
-    args = {}
-
-    OptionParser.new do |opts|
-      opts.banner = "Usage: #{$0} [options]"
+    args   = {}
+    parser = OptionParser.new do |opts|
+      opts.banner  = "Usage: #{$0} [options]"
       opts.separator ""
       opts.separator "options:"
       
-      opts.on("--interactive",  "output stdout/stderr to console") {|o| args[:interactive] = o}
-      opts.on("--env ENV",      "stage|thunderdome|production" )   {|o| args[:env    ]     = o}
-      opts.on("--dry-run",      "take no action"               )   {|o| args[:dry_run]     = o}
-      opts.on("--level LEVEL",  "debug|info|warn|error|fatal"  ) do |o|
+      opts.on("--interactive",   "output stdout/stderr to console") {|o| args[:interactive] = o}
+      opts.on("--dry-run",       "take no action"                 ) {|o| args[:dry_run]     = o}
+      opts.on("--env ENV",       "stage|production|ding-dong|..." ) {|o| args[:environment] = o}
+
+      opts.on("--history PATH",  "where to store history files") do |o| 
+        args[:history] = o || 'history'
+        FileUtils.mkdir_p args[:history]
+        Hadouken::Hosts.history_filepath = args[:history]
+      end
+
+      opts.on("--artifact URL", "URL to the service artifact" ) do |o|
+        begin
+          args[:artifact] = URI.parse(o)
+          raise URI::InvalidURIError unless args[:artifact].is_a?(URI::HTTP)
+        rescue URI::InvalidURIError
+          puts "Sorry, invalid artifact url: #{o}"
+          exit 1
+        end
+      end
+
+      opts.on("--level LEVEL",  "debug|info|warn|error|fatal" ) do |o|
         if o !~ /^(debug|info|warn|error|fatal)$/i
           puts "Sorry, I don't know what that log level is ..."
           exit -1
@@ -76,8 +66,17 @@ class Hadouken::Runner
             when /fatal/ : Logger::FATAL
           end 
         end
+
+        Hadouken.logger.level = args[:level] || Logger::INFO
       end
-    end.parse!
+    end
+    parser.parse!
+
+    unless args.has_key?(:artifact) &&
+           args.has_key?(:environment)
+      puts parser
+      exit 1
+    end
 
     return args    
   end
