@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{hadouken}
-  s.version = "0.1.3.pre"
+  s.version = "0.1.4.pre"
 
   s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
   s.authors = ["Matt Knopp", "Chris Gray"]
-  s.date = %q{2012-01-10}
+  s.date = %q{2012-01-19}
   s.description = %q{run commands over ssh in a way that makes sense for deploying artifacts}
   s.email = ["mknopp@yammer-inc.com, cgray@yammer-inc.com"]
   s.extra_rdoc_files = [
