@@ -6,6 +6,11 @@ class Hadouken::Plan
   attr_accessor :environment
   attr_accessor :dry_run
   attr_accessor :interactive
+
+  attr_accessor :history_path
+  attr_accessor :planfile
+  attr_accessor :artifact
+
   attr_reader   :timestamp
   
   def initialize
@@ -31,7 +36,13 @@ class Hadouken::Plan
   end
 
   def env
-    enviornoment
+    environment
   end
+
+
+  def logger
+    Hadouken.logger
+  end
+
 end
 
