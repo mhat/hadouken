@@ -23,7 +23,7 @@ class Hadouken::Runner
     Hadouken::Executor.run!(plan)
     te0  = Time.now
 
-    logger.info "plan executed in %0.2f" % (te0 - ts0)
+    Hadouken.logger.info "plan executed in %0.2f" % (te0 - ts0)
   end
 
   def self.optparse
