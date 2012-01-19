@@ -43,6 +43,9 @@ class Hadouken::Host
   attr_reader   :name
   attr_reader   :history
 
+  # used to store the net-ssh server object
+  attr_accessor :server
+
   def initialize(opts={})
     @name    = opts[:name]
     @enabled = true
