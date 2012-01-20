@@ -37,7 +37,8 @@ hadouken - soon
       #
       plan.tasks.add Hadouken::Strategy::ByHost.new(plan, :max_hosts => 2, :traversal => :depth)
       plan.tasks.add "restart serviceie-api", :group => :api
-      plan.tasks.add Proc.new { |host|
+      plan.tasks.add Proc.new { |opts|
+        host = opts[:host]
         10.times do
           response = Typhous::Request.get("http://#{host}:8081/healthcheck")
           break if response.status_code == 200
