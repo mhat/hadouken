@@ -40,7 +40,7 @@ hadouken - soon
       plan.tasks.add Proc.new { |opts|
         host = opts[:host]
         10.times do
-          response = Typhous::Request.get("http://#{host}:8081/healthcheck")
+          response = Typheous::Request.get("http://#{host}:8081/healthcheck")
           break if response.status_code == 200
         end
       }, :group => :api
