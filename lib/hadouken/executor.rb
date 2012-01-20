@@ -140,7 +140,7 @@ require 'pp'
             else
               case task
               when Hadouken::Task::Callback 
-                ret = task.call(:host => host)
+                ret = task.call({:host => host})
                 host.history.add task.to_s, ret
                 host.disable! unless ret == true
 
@@ -191,7 +191,7 @@ require 'pp'
             if task = hosts_with_tasks[host].shift
               if task.is_a?(Hadouken::Task::Callback)
                 Hadouken.logger.debug "callback for #{host}"
-                ret = task.call(:host => host) unless plan.dry_run?
+                ret = task.call({:host => host}) unless plan.dry_run?
                 host.history.add(task.to_s, ret)
               else 
                 Hadouken.logger.debug "session.on(#{host}).exec(#{task.command})"
