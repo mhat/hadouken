@@ -49,7 +49,7 @@ class Hadouken::Host
   def initialize(opts={})
     @name    = opts[:name]
     @enabled = true
-    @history = History.new(:hostname => @name)
+    @history = History.new(self)
   end
 
   def disable!
@@ -78,8 +78,8 @@ class Hadouken::Host
   class History
     include Enumerable
 
-    def initialize(opts={})
-      @hostname = opts[:hostname]
+    def initialize(host)
+      @host     = host
       @history  = []
     end
 
@@ -87,7 +87,7 @@ class Hadouken::Host
       stdoutJoined = stdout ? stdout.join("\n") : nil
       stderrJoined = stderr ? stderr.join("\n") : nil
       @history << [command, status, epoch, stdoutJoined, stderrJoined]
-      File.open(host.history_filepath, 'a') do |history_file|
+      File.open(@host.history_filepath, 'a') do |history_file|
         history_file.write(Yajl::Encoder.encode(command_to_hash(command, status, epoch, stdoutJoined, stderrJoined)))
         history_file.write("\n")
       end
