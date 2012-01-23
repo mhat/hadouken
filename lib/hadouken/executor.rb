@@ -105,8 +105,8 @@ class Hadouken::Executor
       end
 
       case strategy.traversal
-        when :breadth : execute_breadth_traversal! host_sets, hosts_with_tasks
-        when :depth   : execute_depth_traversal!   host_sets, hosts_with_tasks
+        when :breadth then execute_breadth_traversal! host_sets, hosts_with_tasks
+        when :depth   then execute_depth_traversal!   host_sets, hosts_with_tasks
         else raise RuntimeError, "unknown tranversal=#{strategy.traversal}"
       end
     end
@@ -127,15 +127,15 @@ require 'pp'
           next unless task = hosts_with_tasks[host].shift
 
           case task
-            when Hadouken::Task::Callback : Hadouken.logger.debug "callback for #{host}"
-            when Hadouken::Task::Command  : Hadouken.logger.debug "session.on(#{host}).exec(#{task.command})"
+            when Hadouken::Task::Callback then Hadouken.logger.debug "callback for #{host}"
+            when Hadouken::Task::Command  then Hadouken.logger.debug "session.on(#{host}).exec(#{task.command})"
           end
 
           if ! plan.dry_run?
             if ! host.enabled?
               case task
-                when Hadouken::Task::Callback : host.history.add task.to_s,    :noop
-                when Hadouken::Task::Command  : host.history.add task.command, :noop
+                when Hadouken::Task::Callback then host.history.add task.to_s,    :noop
+                when Hadouken::Task::Command  then host.history.add task.command, :noop
               end
             else
               case task

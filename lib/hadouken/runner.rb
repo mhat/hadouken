@@ -59,11 +59,11 @@ class Hadouken::Runner
           exit -1
         else
           args[:level] = case o.downcase
-            when /debug/ : Logger::DEBUG
-            when /info/  : Logger::INFO
-            when /warn/  : Logger::WARN
-            when /error/ : Logger::ERROR
-            when /fatal/ : Logger::FATAL
+            when /debug/ then Logger::DEBUG
+            when /info/  then Logger::INFO
+            when /warn/  then Logger::WARN
+            when /error/ then Logger::ERROR
+            when /fatal/ then Logger::FATAL
           end 
         end
 

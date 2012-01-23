@@ -19,13 +19,13 @@ module Hadouken::Task
     def self.create!(instance, opts)
       return case instance
         # autovivify
-        when String         : Hadouken::Task::Command.new  instance, opts
-        when Array          : Hadouken::Task::Command.new  instance, opts
-        when Proc           : Hadouken::Task::Callback.new instance, opts
+        when String then Hadouken::Task::Command.new  instance, opts
+        when Array  then Hadouken::Task::Command.new  instance, opts
+        when Proc   then Hadouken::Task::Callback.new instance, opts
 
         # go with it
-        when Hadouken::Strategy::Base : instance
-        when Hadouken::Task::Base     : instance
+        when Hadouken::Strategy::Base then instance
+        when Hadouken::Task::Base     then instance
 
         # no chance
         else raise ArgumentError
