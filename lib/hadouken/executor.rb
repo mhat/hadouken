@@ -113,7 +113,6 @@ class Hadouken::Executor
   end
 
   private
-require 'pp'
   def execute_depth_traversal!(host_sets, hosts_with_tasks)
     # run all of the commands assigned to the hosts in a host_set then 
     # move on to the next host set. rinse. repeat.
@@ -139,12 +138,12 @@ require 'pp'
               end
             else
               case task
-              when Hadouken::Task::Callback 
+              when Hadouken::Task::Callback
                 ret = task.call({:host => host})
                 host.history.add task.to_s, ret
                 host.disable! unless ret == true
 
-              when Hadouken::Task::Command 
+              when Hadouken::Task::Command
                 Hadouken.logger.info "running #{task.command} on #{host}"
                 channels << [task.command, session.on(host.server).hadouken_exec(task.command)]
               end
@@ -152,26 +151,8 @@ require 'pp'
           end
         end
 
-        if channels.count != 0
-          Hadouken.logger.info "waiting for #{channels.count} commands to execute"
-          next if plan.dry_run?
-          session.loop
-          channels.each do |command, channel|
-            channel.each do |subchannel| 
-              host = Hadouken::Hosts.get(subchannel[:host])
-              host.history.add(command, subchannel[:exit_status], subchannel[:stdout], subchannel[:stderr])
-              if plan.interactive?
-                Hadouken.logger.info "[STDOUT] - #{host.name}: %s" % [ subchannel[:stdout].join("\n") ] if subchannel[:stdout]
-                Hadouken.logger.warn "[STDERR] - #{host.name}: %s" % [ subchannel[:stderr].join("\n") ] if subchannel[:stderr]
-              end
-
-              unless subchannel[:exit_status] == 0
-                Hadouken.logger.debug "got status=#{subchannel[:exit_status]} on #{subchannel[:host]}"
-                host.disable!
-              end
-            end
-          end
-        end
+        # wait for the work assigned to complete before performing more work.
+        wait_on_channels(channels)
 
       end # while hosts_with_tasks
     end # host_sets.each
@@ -188,48 +169,68 @@ require 'pp'
         channels = []
         host_set.each do |host|
           if hosts_with_tasks.has_key?(host)
-            if task = hosts_with_tasks[host].shift
-              if task.is_a?(Hadouken::Task::Callback)
-                Hadouken.logger.debug "callback for #{host}"
-                ret = task.call({:host => host}) unless plan.dry_run?
-                host.history.add(task.to_s, ret)
-              else 
-                Hadouken.logger.debug "session.on(#{host}).exec(#{task.command})"
-                unless plan.dry_run?
-                  channels << [task.command, session.on(host.server).hadouken_exec(task.command)] 
-                end
-              end
-            else
+
+            unless task = hosts_with_tasks[host].shift
+              # remove the host from hosts-with-tasks when there are no more tasks!
               hosts_with_tasks.delete(host)
-            end
-          end          
-        end
-       
-        # wait for the work assigned to complete before performing more work.
-        if channels.count > 0
-          Hadouken.logger.info "waiting for #{channels.count} commands to execute"
-          next if plan.dry_run?
-
-          session.loop
-          channels.each do |command, channel|
-            channel.each do |subchannel| 
-              host = Hadouken::Hosts.get(subchannel[:host])
-              host.history.add(command, subchannel[:exit_status], subchannel[:stdout], subchannel[:stderr])
-              if plan.interactive?
-                Hadouken.logger.info "[STDOUT] - #{host.name}: %s" % [ subchannel[:stdout].join("\n") ] if subchannel[:stdout]
-                Hadouken.logger.warn "[STDERR] - #{host.name}: %s" % [ subchannel[:stderr].join("\n") ] if subchannel[:stderr]
+            else
+              case task
+                when Hadouken::Task::Callback then Hadouken.logger.debug "callback for #{host}"
+                when Hadouken::Task::Command  then Hadouken.logger.debug "session.on(#{host}).exec(#{task.command})"
               end
 
-              unless subchannel[:exit_status] == 0
-                Hadouken.logger.debug "got status=#{subchannel[:exit_status]} on #{subchannel[:host]}"
-                host.disable!
+              if ! plan.dry_run?
+                if ! host.enabled?
+                  case task
+                    when Hadouken::Task::Callback then host.history.add task.to_s,    :noop
+                    when Hadouken::Task::Command  then host.history.add task.command, :noop
+                  end
+                else 
+                  case task
+                  when Hadouken::Task::Callback
+                    ret = task.call({:host => host})
+                    host.history.add task.to_s, ret
+                    host.disable! unless ret == true
+                  when Hadouken::Task::Command
+                    Hadouken.logger.info "running #{task.command} on #{host}"
+                    channels << [task.command, session.on(host.server).hadouken_exec(task.command)]
+                  end
+                end
               end
             end
           end
-        end 
+        end
+
+        # wait for the work assigned to complete before performing more work.
+        wait_on_channels(channels)
 
       end # host_sets.each
     end # while
   end
+
+  def wait_on_channels(channels)
+    if channels.count > 0
+      Hadouken.logger.info "waiting for #{channels.count} commands to execute"
+      return if plan.dry_run?
+
+      session.loop
+      channels.each do |command, channel|
+        channel.each do |subchannel|
+          host = Hadouken::Hosts.get(subchannel[:host])
+          host.history.add(command, subchannel[:exit_status], subchannel[:stdout], subchannel[:stderr])
+          if plan.interactive?
+            Hadouken.logger.info "[STDOUT] - #{host.name}: %s" % [ subchannel[:stdout].join("\n") ] if subchannel[:stdout]
+            Hadouken.logger.warn "[STDERR] - #{host.name}: %s" % [ subchannel[:stderr].join("\n") ] if subchannel[:stderr]
+          end
+
+          unless subchannel[:exit_status] == 0
+            Hadouken.logger.debug "got status=#{subchannel[:exit_status]} on #{subchannel[:host]}"
+            host.disable!
+          end
+        end
+      end
+    end 
+  end
+
 
 end
