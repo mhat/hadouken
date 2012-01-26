@@ -111,7 +111,7 @@ class Hadouken::Host
       return {
         :command => command,
         :status  => status,
-        :time    => epoch,
+        :time    => (epoch * 1000).round,
         :stdout  => stdout,
         :stderr  => stderr
       }
