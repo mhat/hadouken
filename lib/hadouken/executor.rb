@@ -141,7 +141,7 @@ class Hadouken::Executor
               when Hadouken::Task::Callback
                 ret = task.call({:host => host})
                 host.history.add task.to_s, ret
-                host.disable! unless ret == true
+                host.disable! unless ret == 0
 
               when Hadouken::Task::Command
                 Hadouken.logger.info "running #{task.command} on #{host}"
@@ -190,7 +190,7 @@ class Hadouken::Executor
                   when Hadouken::Task::Callback
                     ret = task.call({:host => host})
                     host.history.add task.to_s, ret
-                    host.disable! unless ret == true
+                    host.disable! unless ret == 0
                   when Hadouken::Task::Command
                     Hadouken.logger.info "running #{task.command} on #{host}"
                     channels << [task.command, session.on(host.server).hadouken_exec(task.command)]
