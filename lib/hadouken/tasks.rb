@@ -1,7 +1,10 @@
 class Hadouken::Tasks
   include Enumerable
 
-  def initialize
+  attr_reader :plan
+
+  def initialize(opts)
+    @plan  = opts[:plan]
     @tasks = []
   end
 
@@ -12,6 +15,6 @@ class Hadouken::Tasks
   end
 
   def add(task, opts={})
-    @tasks << Hadouken::Task::Base.create!(task, opts)
+    @tasks << Hadouken::Task::Base.create!(task, {:plan => plan}.merge(opts))
   end
 end

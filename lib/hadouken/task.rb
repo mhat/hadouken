@@ -13,7 +13,7 @@ module Hadouken::Task
     end
 
     def group
-      @plan.group(@group_name)
+      @plan.groups.fetch @group_name
     end
 
     def self.create!(instance, opts)
