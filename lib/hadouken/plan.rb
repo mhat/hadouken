@@ -14,7 +14,7 @@ class Hadouken::Plan
   attr_reader   :timestamp
   
   def initialize
-    @tasks     = Hadouken::Tasks.new(self)
+    @tasks     = Hadouken::Tasks.new(:plan => self)
     @groups    = Hadouken::Groups.new
     @timestamp = Time.now.utc.strftime("%Y%m%d%H%M%S")
   end
